@@ -1,0 +1,3 @@
+﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(388,5): warning MSB8028: The intermediate directory (D:\vs2013\wincap\WpdPack\Examples-pcap\\Debug\x86\) contains files shared from another project (basic_dump.vcxproj, basic_dump_ex.vcxproj, pcap_filter.vcxproj, pktdump_ex.vcxproj, readfile.vcxproj, readfile_ex.vcxproj, savedump.vcxproj, sendpack.vcxproj, UDPdump.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  iflist.c
+  iflist.vcxproj -> D:\vs2013\wincap\WpdPack\Examples-pcap\\Debug\x86\iflist.exe

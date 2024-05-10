@@ -1,0 +1,15 @@
+﻿Build started 2019/1/1 22:47:18.
+     1>Project "D:\vs2013\wincap\WpdPack\Examples-pcap\pktdump_ex\pktdump_ex.vcxproj" on node 2 (Build target(s)).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(388,5): warning MSB8028: The intermediate directory (D:\vs2013\wincap\WpdPack\Examples-pcap\\Debug\x86\) contains files shared from another project (basic_dump.vcxproj, basic_dump_ex.vcxproj, iflist.vcxproj, pcap_filter.vcxproj, readfile.vcxproj, readfile_ex.vcxproj, savedump.vcxproj, sendpack.vcxproj, UDPdump.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+     1>ClCompile:
+         D:\vs2013\install\VC\bin\CL.exe /c /I..\..\include /I"D:\vs2013\vld-2.5.1-setup\install\Visual Leak Detector\include" /ZI /nologo /W4 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _MBCS /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"D:\vs2013\wincap\WpdPack\Examples-pcap\\Debug\x86\\" /Fd"D:\vs2013\wincap\WpdPack\Examples-pcap\\Debug\x86\vc120.pdb" /Gd /TC /analyze- /errorReport:prompt pktdump_ex.c
+         pktdump_ex.c
+       Link:
+         D:\vs2013\install\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\vs2013\wincap\WpdPack\Examples-pcap\\Debug\x86\pktdump_ex.exe" /INCREMENTAL /NOLOGO /LIBPATH:..\..\lib /LIBPATH:"D:\vs2013\vld-2.5.1-setup\install\Visual Leak Detector\lib\Win32" wpcap.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\vs2013\wincap\WpdPack\Examples-pcap\\Debug\x86\pktdump_ex.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\vs2013\wincap\WpdPack\Examples-pcap\\Debug\x86\pktdump_ex.lib" /MACHINE:X86 /SAFESEH "D:\vs2013\wincap\WpdPack\Examples-pcap\\Debug\x86\pktdump_ex.obj"
+     1>pktdump_ex.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
+         pktdump_ex.vcxproj -> D:\vs2013\wincap\WpdPack\Examples-pcap\\Debug\x86\pktdump_ex.exe
+     1>Done Building Project "D:\vs2013\wincap\WpdPack\Examples-pcap\pktdump_ex\pktdump_ex.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:01.07
