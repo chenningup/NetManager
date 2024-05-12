@@ -12,13 +12,29 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
-set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
-)
+add_definitions(-DHAVE_REMOTE)
 
+include_directories("${PROJECT_SOURCE_DIR}/../3rd/")
+include_directories("${PROJECT_SOURCE_DIR}/../3rd/wincap/")
+include_directories("${PROJECT_SOURCE_DIR}/Protocol/arp")
+include_directories("${PROJECT_SOURCE_DIR}/Protocol/NetTransmit")
+include_directories("${PROJECT_SOURCE_DIR}/NetManager")
+link_directories("${PROJECT_SOURCE_DIR}/../Libs/Windows/")
+
+#file(GLOB_RECURSE SRC_DIR_LIST "./*.cpp" "./*.c" "./*.ui" "./*.h")
+aux_source_directory(NetManager NetManager_Src)
+aux_source_directory(Protocol/arp Protocol_Src)
+aux_source_directory(Protocol/NetTransmit Protocol_Src)
+message(STATUS "SRC_DIR_LIST1 = ${Protocol_Src}")	
+message(STATUS "SRC_DIR_LIST = ${NetManager_Src}")	
+set(PROJECT_SOURCES
+    ${Protocol_Src}
+    ${NetManager_Src}
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
+    mainwindow.ui
+)
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(NetManager
         MANUAL_FINALIZATION
@@ -42,7 +58,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(NetManager PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(NetManager PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Packet wpcap)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
