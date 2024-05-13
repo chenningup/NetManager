@@ -91,6 +91,7 @@ void MainWindow::mStopActionSlot()
     int row = ui->tableWidget->currentRow();
     QTableWidgetItem* item = ui->tableWidget->item(row, 0);
     QString ip = item->text();
+    ArpBusiness::Instance().deleteOnitor(ip);
 }
 
 void MainWindow::mIcmpActionSlot()
