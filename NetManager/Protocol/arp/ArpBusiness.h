@@ -5,6 +5,8 @@
 #include <QHash>
 #include <QStringList>
 #include "../NetManager/XuNetInterfaceManager.h"
+#include <QMultiHash>
+#include "Arp.h"
 enum ArpTaskType
 {
     ARP_Broadcast,
@@ -21,7 +23,7 @@ public:
     void init();
     void run();
 
-    void addDeceive(const QString &ip);//欺骗
+    void addDeceive(const QString &ip,const ArpPack&info);//欺骗
     void deleteDeceive(const QString &ip);//欺骗
 
     void addDisconnectNet(const QString &ip);//断网
@@ -39,11 +41,12 @@ signals:
 private:
     /* data */
     QHash<QString,QString>mDeviceInfo;
-    QStringList mDeceiveList;//需要欺骗的列表
+    QHash<QString, ArpPack>mDeceiveHash;
     QStringList mDiconnectNetList;//需要断网列表
-    QStringList mOnitorList;//需要断网列表
+    QStringList mOnitorList;//需要监听列表
     XuNetInterfaceManager * mNetmanager;
     bool isStop;
+    bool isInit;
 };
 
 

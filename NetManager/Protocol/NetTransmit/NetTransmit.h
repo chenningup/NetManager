@@ -6,13 +6,13 @@
 #include <QMutex>
 #include <QSemaphore>
 
-struct TransmitInfo//转发所需要的信息
+struct TransmitInfo//
 {
-    QByteArray devMac;//监听设备mac
-    QByteArray gatewayMac;//网关设备mac
-    QByteArray mMac;//本机mac
-    QByteArray devIP;//监听设备ip
-    QByteArray mIP;//本机IP
+    QByteArray devMac;//鐩戝惉璁惧mac
+    QByteArray gatewayMac;///缃戝叧璁惧mac
+    QByteArray mMac;//鏈満mac
+    QByteArray devIP;//鐩戝惉璁惧ip
+    QByteArray mIP;//鏈満IP
 };
 
 class NetTransmit : public QThread
@@ -39,6 +39,7 @@ private:
     QMutex mTransmitInfoMutex;
     QList<TransmitInfo>mTransmitInfoList;
     bool isStop;
+    bool isInit;
 };
 
 

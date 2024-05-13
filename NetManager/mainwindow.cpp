@@ -83,6 +83,7 @@ void MainWindow::mOnitorActionSlot()
     int row = ui->tableWidget->currentRow();
     QTableWidgetItem* item = ui->tableWidget->item(row, 0);
     QString ip = item->text();
+    ArpBusiness::Instance().addOnitor(ip);
 }
 
 void MainWindow::mStopActionSlot()
