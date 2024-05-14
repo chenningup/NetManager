@@ -2,6 +2,7 @@
 #include "./ui_mainwindow.h"
 #include "./Protocol/arp/ArpBusiness.h"
 #include "./NetManager/XuNetInterfaceManager.h"
+#include "../Analyse/Analyse.h"
 #include<QDebug>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->netInterfaceComboBox->addItems(XuNetInterfaceManager::Instance()->getNetInterfaceDesList());
     connect(&ArpBusiness::Instance(),&ArpBusiness::findDevice,this,&MainWindow::onRecArpInfo);
     ArpBusiness::Instance().init();
+    Analyse::Instance().init();
     init();
 }
 
