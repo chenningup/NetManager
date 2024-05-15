@@ -51,7 +51,7 @@ void NetTransmit::run()
                         sendbyte.replace(6, 6, tmpTransmitInfoList[i].mMac);//
                         XuNetInterfaceManager::Instance()->send((unsigned char *)sendbyte.data(), sendbyte.size());
                     }
-                    if (desmac == tmpTransmitInfoList[i].mMac && sourmac == tmpTransmitInfoList[i].gatewayMac && type == 8 && tmp->count() > 34 && (tmp->mid(30, 4) == tmpTransmitInfoList[i].devIP))
+                    if (desmac == tmpTransmitInfoList[i].mMac && sourmac == tmpTransmitInfoList[i].gatewayMac && type == 8 && tmp->size() > 34 && (tmp->mid(30, 4) == tmpTransmitInfoList[i].devIP))
                     {
                         QByteArray sendbyte(tmp->data(), tmp->size());
                         sendbyte.replace(0, 6, tmpTransmitInfoList[i].devMac);//

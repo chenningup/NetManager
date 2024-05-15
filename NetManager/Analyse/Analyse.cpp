@@ -3,6 +3,155 @@
 #include <QFile>
 #include<QIODevice>
 #include "../Protocol/Tcp/Tcp.h"
+
+
+void paserIpData(IpData & ipdata,int &length, const QByteArray*bytedata)
+{
+	memcpy(&ipdata, bytedata->data() + sizeof(LinkLayerData), sizeof(IpData));
+	length = ipdata.versionAndHeaderLength & 0X0F;
+}
+
+void paserTcpData(TcpData& tcpdata, int& length, int iplength,const QByteArray* bytedata)
+{
+	memcpy(&tcpdata, bytedata->data() + sizeof(LinkLayerData) + iplength, sizeof(TcpData));
+	length = (tcpdata.headerLengthAndFlag[1] & 0XF0) >> 4;
+}
+
+
+
+void parseIpAndTcpData(IpData &ipdata, int& iplength, TcpData& tcpdata, int& tcplength, const QByteArray* bytedata)
+{
+	memcpy(&ipdata, bytedata->data() + sizeof(LinkLayerData), sizeof(IpData));
+	iplength = ipdata.versionAndHeaderLength & 0X0F;
+
+	memcpy(&tcpdata, bytedata->data() + sizeof(LinkLayerData) + iplength, sizeof(TcpData));
+	tcplength = (tcpdata.headerLengthAndFlag[1] & 0XF0) >> 4;
+}
+
+
+
+void CommunicationPack::addHeader(std::shared_ptr<QByteArray>& pack)
+{
+	if (findHeader)
+	{
+		return;
+	}
+	mSortData.insert(0, pack);
+	findHeader = true;
+}
+
+void CommunicationPack::addEnd(std::shared_ptr<QByteArray>& pack)
+{
+	if (findEnd)
+	{
+		return;
+	}
+	mNoSortData.push_back(pack);
+	findEnd = true;
+}
+
+void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
+{
+	if (findHeader)
+	{
+		IpData packIpData = { 0 };
+		int packiplength;
+		TcpData packTcpData = { 0 };
+		int packtcplength;
+		parseIpAndTcpData(packIpData, packiplength, packTcpData, packtcplength, pack.get());
+
+		bool isinsert = false;
+		for (int i = 0; i < mSortData.size(); i++)
+		{
+			std::shared_ptr<QByteArray> tmp = mSortData[i];
+			IpData tmpIpData = { 0 };
+			int iplength;
+			TcpData tmpTcpData = { 0 };
+			int tcplength;
+			parseIpAndTcpData(tmpIpData, iplength, tmpTcpData, tcplength, tmp.get());
+			int needseq = tmpIpData.totalLength - tcplength - iplength + tmpTcpData.seqNum;
+			if (packTcpData.seqNum == needseq)
+			{
+				mSortData.insert(i+1, pack);
+				isinsert = true;
+				break;
+			}
+		}
+		if (!isinsert)
+		{
+			mNoSortData.push_back(pack);
+		}
+		else
+		{
+			for (int j = 0; j < mNoSortData.size(); j++)
+			{
+				IpData nosortIpData = { 0 };
+				int nosortiplength;
+
+				TcpData nosortTcpData = { 0 };
+				int nosorttcplength;
+				parseIpAndTcpData(nosortIpData, nosortiplength, nosortTcpData, nosorttcplength, mNoSortData[j].get());
+				for (int i= 0; i < mSortData.size(); i++)
+				{
+					std::shared_ptr<QByteArray> tmp = mSortData[i];
+
+					IpData tmpIpData = { 0 };
+					int  tmpiplength;
+					TcpData tmpTcpData = { 0 };
+					int tmptcplength;
+					parseIpAndTcpData(tmpIpData, tmpiplength, tmpTcpData, tmptcplength, tmp.get());
+					int needseq = tmpIpData.totalLength - tmptcplength - tmpiplength + tmpTcpData.seqNum;
+					if (nosortTcpData.seqNum == needseq)
+					{
+						mSortData.insert(i+1, mNoSortData[j]);
+						mNoSortData.removeAt(j);
+						j--;
+						break;
+					}
+				}
+			}
+		}
+		bool isequal = true;
+		if (findHeader && findEnd && mNoSortData.isEmpty())
+		{
+			for (int i = 0; i < mSortData.size() - 1; i++)
+			{
+				std::shared_ptr<QByteArray> first = mSortData[i];
+				std::shared_ptr<QByteArray> second = mSortData[i+1];
+
+				IpData firstpData = { 0 };
+				int  firstiplength;
+				TcpData firstTcpData = { 0 };
+				int tcplength ;
+				parseIpAndTcpData(firstpData, firstiplength, firstTcpData, tcplength, first.get());
+				int needSeq = firstTcpData.seqNum + firstpData.totalLength - firstiplength - tcplength;
+
+				IpData secondipData = { 0 };
+				int  secondiplength;
+
+				TcpData secondTcpData = { 0 };
+				int secondtcplength;
+				parseIpAndTcpData(secondipData, secondiplength, secondTcpData, secondtcplength, second.get());
+				if (needSeq != secondTcpData.seqNum)
+				{
+					isequal = false;
+					break;
+				}
+			}
+		}
+		if (isequal)
+		{
+			ok = true;
+		}
+	}
+	else
+	{
+		mNoSortData.push_back(pack);
+	}
+}
+
+
+
 Analyse::Analyse() :isInit(false), isStop(false)
 {
 }
@@ -48,7 +197,7 @@ void Analyse::run()
 
             TcpData tmpTcpData = {0};
             memcpy(&tmpIpData,tmplist[i]->data()+sizeof(LinkLayerData)+iplength,sizeof(TcpData));
-            int tcplength = (tmpIpData.headerChecksum[1] & 0XF0) >> 4; 
+            int tcplength = (tmpTcpData.headerLengthAndFlag[1] & 0XF0) >> 4;
 
 
             if(tmpTcpData.sourcePort == 80 )
@@ -57,14 +206,14 @@ void Analyse::run()
 				int lastrn = httpdata.lastIndexOf("\r\n");
 				if(lastrn != -1)
 				{
-					QByteArray headParam = httpdata.mid(0,lastrn);
-					QList<QByteArray>headerlist = headParam.split("\r\n");
+					QString headParamStr = QString(httpdata.mid(0, lastrn));
+					QStringList headParamList= headParamStr.split("\r\n");
 					QHash<QString,QString>headerKeyandValue;
-					for (size_t i = 0; i < headerlist.size(); i++)
+					for (size_t i = 0; i < headParamList.size(); i++)
 					{
-						if(headerlist[i].contains(":"))
+						if(headParamList[i].contains(":"))
 						{
-							QList<QByteArray>param   = headerlist[i].split(":");
+							QStringList param   = headParamList[i].split(":");
 							if(param.size()==2)
 							{
 								headerKeyandValue.insert(QString(param[0]),QString(param[1]));
@@ -72,20 +221,38 @@ void Analyse::run()
 						}
 					}
 
-					//找到了头
-					if(headerKeyandValue.contains("Content-Type") && headerKeyandValue["Content-Type"].indexOf("image") > -1)
+					CommunicationPack* pack = nullptr;
+					if (mCommunicationPackHash.contains(tmpTcpData.ackNum))
 					{
-						if(mCommunicationPackHash.contains(tmpTcpData.ackNum))
-						{
-							
-						}
+						pack = mCommunicationPackHash[tmpTcpData.ackNum];
 					}
 					else
 					{
-						
+						pack = new CommunicationPack();
+						mCommunicationPackHash.insert(tmpTcpData.ackNum, pack);
+					}
+					//找到了头
+					if(headerKeyandValue.contains("Content-Type") && headerKeyandValue["Content-Type"].indexOf("image") > -1)
+					{
+						int length = 0;
+						if (headerKeyandValue.contains("Content-Length"))
+						{
+							length = headerKeyandValue["Content-Length"].replace(" ","").toInt();
+						}
+						else
+						{
+							if (headerKeyandValue.contains("Size"))
+							{
+								length = headerKeyandValue["Size"].replace(" ", "").toInt();
+							}
+						}
+						pack->addHeader(tmplist[i], length);
+					}
+					else
+					{
+						pack->addPack(tmplist[i]);
 					}
 				}
-
             }
 		}
 		mRecMutex.lock();
@@ -101,3 +268,4 @@ bool Analyse::receiveData(std::shared_ptr<QByteArray> data)
 	mRecMutex.unlock();
     return true;
 }
+
