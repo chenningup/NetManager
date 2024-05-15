@@ -44,7 +44,7 @@ void NetTransmit::run()
                     bool ok;
                     QByteArray dstportarray = tmp->mid(36, 2);
                     int dstport = dstportarray.toHex().toInt(&ok, 16);
-                    if (desmac == tmpTransmitInfoList[i].mMac && sourmac == tmpTransmitInfoList[i].devMac && type == 8)//�Ǽ����ķ���������
+                    if (desmac == tmpTransmitInfoList[i].mMac && sourmac == tmpTransmitInfoList[i].devMac && type == 8)//
                     {
                         QByteArray sendbyte(tmp->data(), tmp->size());
                         sendbyte.replace(0, 6, tmpTransmitInfoList[i].gatewayMac);

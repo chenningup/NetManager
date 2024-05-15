@@ -37,7 +37,7 @@ void Analyse::run()
 		mRecMutex.lock();
 		QList<std::shared_ptr<QByteArray>>tmplist = mRecDataList;
 		mRecMutex.unlock();
-		for (size_t i = 0; i < tmplist.size(); i++)
+		for (int i = 0; i < tmplist.size(); i++)
 		{
             LinkLayerData tmpLinkLayerData = {0};
             memcpy(&tmpLinkLayerData,tmplist[i]->data(),sizeof(LinkLayerData));
@@ -53,48 +53,40 @@ void Analyse::run()
 
             if(tmpTcpData.sourcePort == 80 )
             {
-                int contenttype = tmplist[i]->indexOf("Content-Type");
-                if (contenttype > 0)
-                {
-
-                }
-            }
-			QByteArray desmac = tmplist[i]->mid(0, 6);
-			QByteArray sourmac = tmplist[i]->mid(6, 6);
-			int type = tmplist[i]->at(12);
-			bool ok;
-			QByteArray dstportarray = tmplist[i]->mid(34, 2);
-			int dstport = dstportarray.toHex().toInt(&ok, 16);
-			if (dstport == 80)
-			{
-				int contenttype = tmplist[i]->indexOf("Content-Type");
-				if (contenttype > 0)
+				QByteArray httpdata = tmplist[i]->mid(sizeof(LinkLayerData) + iplength + tcplength);
+				int lastrn = httpdata.lastIndexOf("\r\n");
+				if(lastrn != -1)
 				{
-					int jieshu = tmplist[i]->indexOf("\r\n", contenttype);
-					if (jieshu)
+					QByteArray headParam = httpdata.mid(0,lastrn);
+					QList<QByteArray>headerlist = headParam.split("\r\n");
+					QHash<QString,QString>headerKeyandValue;
+					for (size_t i = 0; i < headerlist.size(); i++)
 					{
-						QByteArray type = tmplist[i]->mid(contenttype, jieshu - contenttype);
-						int typeindex = type.indexOf("image");
-						if (typeindex > 0)
+						if(headerlist[i].contains(":"))
 						{
-							//qDebug() << QString(type);
-
-							//QString houzhui = type.mid(typeindex + 6);
-							//int httpend = tmplist[i]->indexOf("\r\n\r\n") + 4;
-							//QByteArray picbyte = tmplist[i]->mid(httpend);
-							////QString num = QString::number(AnalysisManager::getnum());
-							//QFile file(num + "." + houzhui);
-							//file.open(QIODevice::WriteOnly);
-							//file.write(picbyte);        // write to stderr
-							//file.close();
-							//QFile file1(num + houzhui);
-							//file1.open(QIODevice::WriteOnly);
-							//file1.write(*receivedata);        // write to stderr
-							//file1.close();
+							QList<QByteArray>param   = headerlist[i].split(":");
+							if(param.size()==2)
+							{
+								headerKeyandValue.insert(QString(param[0]),QString(param[1]));
+							}
 						}
 					}
+
+					//找到了头
+					if(headerKeyandValue.contains("Content-Type") && headerKeyandValue["Content-Type"].indexOf("image") > -1)
+					{
+						if(mCommunicationPackHash.contains(tmpTcpData.ackNum))
+						{
+							
+						}
+					}
+					else
+					{
+						
+					}
 				}
-			}
+
+            }
 		}
 		mRecMutex.lock();
 		mRecDataList.remove(0, tmplist.size());
