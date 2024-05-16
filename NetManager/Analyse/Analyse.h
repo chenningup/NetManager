@@ -13,14 +13,14 @@ public:
     CommunicationPack()
     {
         findHeader = false;
-        findEnd = false;
         ok = false;
         mHttpLength = -1;
-        mHttpData = std::shared_ptr<QByteArray> pointer(new QByteArray());
+        std::shared_ptr<QByteArray> pointer(new QByteArray());
+        mHttpData = pointer;
     };
     void addHeader(std::shared_ptr<QByteArray>&pack,int httplength = 0);
     void addPack(std::shared_ptr<QByteArray>& pack);
-    void handleFinishRecHttpHeader(std::shared_ptr<QByteArray>& pack);
+    void handleFinishRecHttpHeader(std::shared_ptr<QByteArray>& pack,int iplength,int tcplength);
 private:
     bool findHeader;//
     bool recHeadFinish;//http头全部接收完毕

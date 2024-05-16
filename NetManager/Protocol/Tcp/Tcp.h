@@ -7,7 +7,7 @@ struct LinkLayerData
     //链路层
     unsigned char disMac[6];
     unsigned char srcMac[6];
-    short int type;
+    unsigned short int type;
 };
 #pragma pack ()
 
@@ -19,8 +19,8 @@ struct IpData //Tcp的格式
     //IP层
     unsigned char versionAndHeaderLength;
     unsigned char serviceField[1];
-    short int totalLength;
-    short int identification;
+    unsigned short int totalLength;
+    unsigned short int identification;
     unsigned char flagAndOffset[2];
     unsigned char timeToLive;
     unsigned char protocol;
@@ -34,14 +34,14 @@ struct IpData //Tcp的格式
 #pragma pack(1)
 struct TcpData
 {
-    short int sourcePort;
-    short int distPort;
-    int seqNum;
-    int ackNum;
+    unsigned short int sourcePort;
+    unsigned short int distPort;
+    unsigned int seqNum;
+    unsigned int ackNum;
     unsigned char headerLengthAndFlag[2];
-    short int window;
-    short int checksum;
-    short int urgentPtr;
+    unsigned short int window;
+    unsigned short int checksum;
+    unsigned short int urgentPtr;
 };
 #pragma pack ()
 

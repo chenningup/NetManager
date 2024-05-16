@@ -22,10 +22,14 @@ void paserTcpData(TcpData& tcpdata, int& length, int iplength,const QByteArray* 
 void parseIpAndTcpData(IpData &ipdata, int& iplength, TcpData& tcpdata, int& tcplength, const QByteArray* bytedata)
 {
 	memcpy(&ipdata, bytedata->data() + sizeof(LinkLayerData), sizeof(IpData));
-	iplength = ipdata.versionAndHeaderLength & 0X0F;
+    iplength = (ipdata.versionAndHeaderLength & 0X0F) * 4;
 
+    if(ipdata.protocol != 6)
+    {
+        return;
+    }
 	memcpy(&tcpdata, bytedata->data() + sizeof(LinkLayerData) + iplength, sizeof(TcpData));
-	tcplength = (tcpdata.headerLengthAndFlag[1] & 0XF0) >> 4;
+    tcplength = (tcpdata.headerLengthAndFlag[0] >> 4) * 4;
 }
 
 
@@ -61,7 +65,6 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 		TcpData packTcpData = { 0 };
 		int packtcplength;
 		parseIpAndTcpData(packIpData, packiplength, packTcpData, packtcplength, pack.get());
-		QByteArray tmphttpdata = 
 		bool isinsert = false;
 		for (int i = 0; i < mSortData.size(); i++)
 		{
@@ -75,7 +78,7 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 			if (packTcpData.seqNum == needseq)
 			{
 				mSortData.insert(i+1, pack);
-				handleFinishRecHttpHeader(pack);
+				handleFinishRecHttpHeader(pack, packiplength, packtcplength);
 				isinsert = true;
 				break;
 			}
@@ -107,7 +110,7 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 					if (nosortTcpData.seqNum == needseq)
 					{
 						mSortData.insert(i+1, mNoSortData[j]);
-						handleFinishRecHttpHeader(mNoSortData[j]);
+						handleFinishRecHttpHeader(mNoSortData[j], tmpiplength, tmptcplength);
 						mNoSortData.removeAt(j);
 						j--;
 						break;
@@ -116,7 +119,7 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 			}
 		}
 		bool isequal = true;
-		if (findHeader && findEnd && mNoSortData.isEmpty())
+		if (findHeader  && mNoSortData.isEmpty())
 		{
 			for (int i = 0; i < mSortData.size() - 1; i++)
 			{
@@ -147,14 +150,19 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 		{
 			if(mHttpLength == mHttpData->size())
 			{
-				dDebug()<< "receive ok";
+				//dDebug()<< "receive ok";
 				//mHttpData->save();
 				ok = true;
 			}
-			if(mHttpData.mid(mHttpData.size() - 5))
+			else
 			{
-
+				QByteArray byte("\r\n0\r\n");
+				if(mHttpData->mid(mHttpData->size() - 5) == byte)
+				{
+					ok = true;
+				}
 			}
+
 		}
 	}
 	else
@@ -163,13 +171,13 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 	}
 }
 
-void CommunicationPack::handleFinishRecHttpHeader(std::shared_ptr<QByteArray> &pack)
+void CommunicationPack::handleFinishRecHttpHeader(std::shared_ptr<QByteArray> &pack,int iplength, int tcplength)
 {
 	if(recHeadFinish)
 	{
-		retunr;
+		return;
 	}
-	QByteArray tmphttpdata = pack->mid(sizeof(LinkLayerData)+packiplength+packtcplength);
+	QByteArray tmphttpdata = pack->mid(sizeof(LinkLayerData)+ iplength + tcplength);
 	QByteArrayView y("\r\n\r\n");
 	int indexend = tmphttpdata.indexOf(y);
 	if(indexend>= 0)
@@ -218,18 +226,15 @@ void Analyse::run()
 		mRecMutex.unlock();
 		for (int i = 0; i < tmplist.size(); i++)
 		{
-            LinkLayerData tmpLinkLayerData = {0};
-            memcpy(&tmpLinkLayerData,tmplist[i]->data(),sizeof(LinkLayerData));
-
-            IpData tmpIpData = {0};
-            memcpy(&tmpIpData,tmplist[i]->data()+sizeof(LinkLayerData),sizeof(IpData));
-            unsigned char iplength = tmpIpData.versionAndHeaderLength & 0X0F;
-
-            TcpData tmpTcpData = {0};
-            memcpy(&tmpIpData,tmplist[i]->data()+sizeof(LinkLayerData)+iplength,sizeof(TcpData));
-            int tcplength = (tmpTcpData.headerLengthAndFlag[1] & 0XF0) >> 4;
-
-
+			IpData tmpIpData = { 0 };
+			int iplength;
+			TcpData tmpTcpData = { 0 };
+			int tcplength;
+			parseIpAndTcpData(tmpIpData, iplength, tmpTcpData, tcplength, tmplist[i].get());
+            if(tmpIpData.protocol != 6)
+            {
+                continue;
+            }
             if(tmpTcpData.sourcePort == 80 )
             {
 				QByteArray httpdata = tmplist[i]->mid(sizeof(LinkLayerData) + iplength + tcplength);
