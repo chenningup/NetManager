@@ -3,7 +3,7 @@
 #include <QFile>
 #include<QIODevice>
 #include "../Protocol/Tcp/Tcp.h"
-
+#include <QByteArrayView>
 
 void paserIpData(IpData & ipdata,int &length, const QByteArray*bytedata)
 {
@@ -30,25 +30,27 @@ void parseIpAndTcpData(IpData &ipdata, int& iplength, TcpData& tcpdata, int& tcp
 
 
 
-void CommunicationPack::addHeader(std::shared_ptr<QByteArray>& pack)
+void CommunicationPack::addHeader(std::shared_ptr<QByteArray>& pack,int httplength)
 {
 	if (findHeader)
 	{
 		return;
 	}
+	QByteArrayView y("\r\n\r\n");
+	int indexend = pack->indexOf(y);
+	if(indexend>= 0)
+	{
+		recHeadFinish = true;
+		if(indexend != (pack->size() - 5))
+		{
+			mHttpData->append(pack->mid(indexend+4));
+		}
+	}
 	mSortData.insert(0, pack);
 	findHeader = true;
+	mHttpLength = httplength;
 }
 
-void CommunicationPack::addEnd(std::shared_ptr<QByteArray>& pack)
-{
-	if (findEnd)
-	{
-		return;
-	}
-	mNoSortData.push_back(pack);
-	findEnd = true;
-}
 
 void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 {
@@ -59,7 +61,7 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 		TcpData packTcpData = { 0 };
 		int packtcplength;
 		parseIpAndTcpData(packIpData, packiplength, packTcpData, packtcplength, pack.get());
-
+		QByteArray tmphttpdata = 
 		bool isinsert = false;
 		for (int i = 0; i < mSortData.size(); i++)
 		{
@@ -73,6 +75,7 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 			if (packTcpData.seqNum == needseq)
 			{
 				mSortData.insert(i+1, pack);
+				handleFinishRecHttpHeader(pack);
 				isinsert = true;
 				break;
 			}
@@ -104,6 +107,7 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 					if (nosortTcpData.seqNum == needseq)
 					{
 						mSortData.insert(i+1, mNoSortData[j]);
+						handleFinishRecHttpHeader(mNoSortData[j]);
 						mNoSortData.removeAt(j);
 						j--;
 						break;
@@ -141,7 +145,16 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 		}
 		if (isequal)
 		{
-			ok = true;
+			if(mHttpLength == mHttpData->size())
+			{
+				dDebug()<< "receive ok";
+				//mHttpData->save();
+				ok = true;
+			}
+			if(mHttpData.mid(mHttpData.size() - 5))
+			{
+
+			}
 		}
 	}
 	else
@@ -150,7 +163,24 @@ void CommunicationPack::addPack(std::shared_ptr<QByteArray>& pack)
 	}
 }
 
-
+void CommunicationPack::handleFinishRecHttpHeader(std::shared_ptr<QByteArray> &pack)
+{
+	if(recHeadFinish)
+	{
+		retunr;
+	}
+	QByteArray tmphttpdata = pack->mid(sizeof(LinkLayerData)+packiplength+packtcplength);
+	QByteArrayView y("\r\n\r\n");
+	int indexend = tmphttpdata.indexOf(y);
+	if(indexend>= 0)
+	{
+		recHeadFinish = true;
+		if(indexend != (pack->size() - 5))
+		{
+			mHttpData->append(pack->mid(indexend+4));
+		}
+	}
+}
 
 Analyse::Analyse() :isInit(false), isStop(false)
 {

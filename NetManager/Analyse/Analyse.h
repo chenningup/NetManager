@@ -5,8 +5,8 @@
 #include <QThread>
 #include<QMutex>
 #include <QHash>
-//因为一个http的请求 会分为很多包
-//一个通信包
+//
+//
 class CommunicationPack
 {
 public:
@@ -15,18 +15,20 @@ public:
         findHeader = false;
         findEnd = false;
         ok = false;
-        mHttpLength = 0;
+        mHttpLength = -1;
+        mHttpData = std::shared_ptr<QByteArray> pointer(new QByteArray());
     };
     void addHeader(std::shared_ptr<QByteArray>&pack,int httplength = 0);
-    //void addEnd(std::shared_ptr<QByteArray>& pack);
     void addPack(std::shared_ptr<QByteArray>& pack);
+    void handleFinishRecHttpHeader(std::shared_ptr<QByteArray>& pack);
 private:
-    bool findHeader;//找到头了
-    bool findEnd;//找到尾了
-    QList<std::shared_ptr<QByteArray>>mNoSortData;//还没找到位置的包
-    QList<std::shared_ptr<QByteArray>>mSortData;//排过序号的包
-    bool ok;//全部找齐了
-    bool mHttpLength;
+    bool findHeader;//
+    bool recHeadFinish;//http头全部接收完毕
+    QList<std::shared_ptr<QByteArray>>mNoSortData;//
+    QList<std::shared_ptr<QByteArray>>mSortData;//
+    std::shared_ptr<QByteArray>mHttpData;
+    bool ok;//
+    int mHttpLength;
 };
 
 class Analyse :public QThread

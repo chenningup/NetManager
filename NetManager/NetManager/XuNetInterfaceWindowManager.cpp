@@ -38,7 +38,7 @@ bool XuNetInterfaceWindowManager::open(const QString &name)
     }
     if(!errbuf)
     {
-        errbuf = new char(PCAP_ERRBUF_SIZE);
+        errbuf = new char[PCAP_ERRBUF_SIZE];
     }
 	NetInterfaceInfo& tmp = mNetInterfaceInfoHash[name];
     if ((mCap = pcap_open(mNetInterfaceInfoHash[name].adapterName.toLocal8Bit().data(),
