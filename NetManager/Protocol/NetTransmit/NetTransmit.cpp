@@ -1,6 +1,32 @@
 
 #include "NetTransmit.h"
 #include"../../NetManager/XuNetInterfaceManager.h"
+#include"../arp/ArpBusiness.h"
+bool macStrToByte1(QByteArray& marray, const QString& str)
+{
+    marray.clear();
+    QStringList maclist = str.split(':');
+    for (size_t i = 0; i < maclist.size(); i++)
+    {
+        bool ok;
+        int hexnum = maclist[i].toInt(&ok, 16);
+        marray.push_back(hexnum);
+    }
+    return true;
+}
+
+bool ipStrToByte1(QByteArray& marray, const QString& str)
+{
+    marray.clear();
+    QStringList maclist = str.split('.');
+    for (size_t i = 0; i < maclist.size(); i++)
+    {
+        bool ok;
+        int hexnum = maclist[i].toInt(&ok, 10);
+        marray.push_back(hexnum);
+    }
+    return true;
+}
 NetTransmit::NetTransmit(/* args */) :isStop(false), isInit(false)
 {
 }
@@ -20,50 +46,47 @@ void NetTransmit::run()
 {
     while (!isStop)
     {
-        if (!mRecDataList.isEmpty())
+        mRecDataQSem.acquire();
+        if (mRecDataList.isEmpty())
         {
-            mTransmitInfoMutex.lock();
-            QList<TransmitInfo>tmpTransmitInfoList = mTransmitInfoList;
-            mTransmitInfoMutex.unlock();
-            if (tmpTransmitInfoList.isEmpty())
-            {
-                mRecDataMutex.lock();
-                mRecDataList.pop_front();
-                mRecDataMutex.unlock();
-            }
-            else
-            {
-                mRecDataMutex.lock();
-                std::shared_ptr<QByteArray>tmp = mRecDataList[0];
-                mRecDataMutex.unlock(); 
-                for (size_t i = 0; i < tmpTransmitInfoList.size(); i++)
-                {
-                    QByteArray desmac = tmp->mid(0, 6);
-                    QByteArray sourmac = tmp->mid(6, 6);
-                    int type = tmp->at(12);
-                    bool ok;
-                    QByteArray dstportarray = tmp->mid(36, 2);
-                    int dstport = dstportarray.toHex().toInt(&ok, 16);
-                    if (desmac == tmpTransmitInfoList[i].mMac && sourmac == tmpTransmitInfoList[i].devMac && type == 8)//
-                    {
-                        QByteArray sendbyte(tmp->data(), tmp->size());
-                        sendbyte.replace(0, 6, tmpTransmitInfoList[i].gatewayMac);
-                        sendbyte.replace(6, 6, tmpTransmitInfoList[i].mMac);//
-                        XuNetInterfaceManager::Instance()->send((unsigned char *)sendbyte.data(), sendbyte.size());
-                    }
-                    if (desmac == tmpTransmitInfoList[i].mMac && sourmac == tmpTransmitInfoList[i].gatewayMac && type == 8 && tmp->size() > 34 && (tmp->mid(30, 4) == tmpTransmitInfoList[i].devIP))
-                    {
-                        QByteArray sendbyte(tmp->data(), tmp->size());
-                        sendbyte.replace(0, 6, tmpTransmitInfoList[i].devMac);//
-                        sendbyte.replace(6, 6, tmpTransmitInfoList[i].mMac);//
-                        XuNetInterfaceManager::Instance()->send((unsigned char*)sendbyte.data(), sendbyte.size());
-                    }
-                    mRecDataMutex.lock();
-                    mRecDataList.pop_front();
-                    mRecDataMutex.unlock();
-                }
-            }
+            continue;
         }
+        NetInterfaceInfo mNetinfo = XuNetInterfaceManager::Instance()->getCurNetfaceInfo();
+        mRecDataMutex.lock();
+        std::shared_ptr<QByteArray>tmp = mRecDataList[0];
+        mRecDataMutex.unlock(); 
+        QByteArray desmac = tmp->mid(0, 6);
+        QByteArray sourmac = tmp->mid(6, 6);
+        int type = tmp->at(12);
+        bool ok;
+        QByteArray dstportarray = tmp->mid(36, 2);
+        int dstport = dstportarray.toHex().toInt(&ok, 16);
+
+        QByteArray mMac;
+        macStrToByte1(mMac, mNetinfo.mac);
+        QByteArray mGateway;
+        macStrToByte1(mGateway, ArpBusiness::Instance().getMacByIp(mNetinfo.gateway));
+        QByteArray mIp;
+        ipStrToByte1(mIp, mNetinfo.ip);
+        if (desmac == mMac && sourmac != mGateway && type == 8)//
+        {
+            QByteArray sendbyte(tmp->data(), tmp->size());
+            sendbyte.replace(0, 6, mGateway);
+            sendbyte.replace(6, 6, mMac);//
+            XuNetInterfaceManager::Instance()->send((unsigned char*)sendbyte.data(), sendbyte.size());
+        }
+        QByteArray devIp = tmp->mid(30, 4);
+        if (desmac == mMac && sourmac == mGateway && type == 8 && tmp->size() > 34 && (devIp != mIp))
+        {
+            QByteArray sendbyte(tmp->data(), tmp->size());
+            sendbyte.replace(0, 6, ArpBusiness::Instance().getMacByIp(devIp));//
+            sendbyte.replace(6, 6, mMac);//
+            XuNetInterfaceManager::Instance()->send((unsigned char*)sendbyte.data(), sendbyte.size());
+        }
+        mRecDataMutex.lock();
+        mRecDataList.pop_front();
+        mRecDataMutex.unlock();
+        
     }
 }
 
@@ -84,6 +107,7 @@ bool NetTransmit::receiveData(std::shared_ptr<QByteArray> data)
     mRecDataMutex.lock();
     mRecDataList.push_back(data);
     mRecDataMutex.unlock();
+    mRecDataQSem.release();
     return true;
 }
 
@@ -93,4 +117,21 @@ void NetTransmit::addTransmitDev(const TransmitInfo& info)
     mTransmitInfoMutex.lock();
     mTransmitInfoList.push_back(info);
     mTransmitInfoMutex.unlock();
+}
+
+void NetTransmit::startTransmit()
+{
+    if (!isRunning())
+    {
+        isStop = false;
+        start();
+    }
+}
+
+void NetTransmit::endTransmit()
+{
+    if (!isRunning())
+    {
+        isStop = false;
+    }
 }

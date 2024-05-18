@@ -18,7 +18,7 @@ struct IpData //Tcp的格式
 {
     //IP层
     unsigned char versionAndHeaderLength;
-    unsigned char serviceField[1];
+    unsigned char serviceField;
     unsigned short int totalLength;
     unsigned short int identification;
     unsigned char flagAndOffset[2];
@@ -53,20 +53,6 @@ public:
     Tcp(/* args */);
     ~Tcp();
 };
-
-Tcp::Tcp(/* args */)
-{
-}
-
-Tcp::~Tcp()
-{
-}
-
-
-
-
-
-
 
 
 

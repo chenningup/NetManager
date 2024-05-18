@@ -102,3 +102,9 @@ void MainWindow::mIcmpActionSlot()
     QTableWidgetItem* item = ui->tableWidget->item(row, 0);
     QString ip = item->text();
 }
+
+void MainWindow::on_globalMoitorBtn_clicked()
+{
+    ArpBusiness::Instance().globalOnitor();
+}
+

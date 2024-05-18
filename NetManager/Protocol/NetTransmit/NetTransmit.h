@@ -32,7 +32,9 @@ public:
 
     void addTransmitDev(const TransmitInfo&info);
 
+    void startTransmit();
 
+    void endTransmit();
 private:
     QMutex mRecDataMutex;
     QSemaphore mRecDataQSem;

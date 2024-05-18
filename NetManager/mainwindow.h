@@ -32,6 +32,9 @@ public slots:
     void mOnitorActionSlot();
     void mStopActionSlot();
     void mIcmpActionSlot();
+private slots:
+    void on_globalMoitorBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
     QHash<QString,QString>mDeviceInfoHash;

