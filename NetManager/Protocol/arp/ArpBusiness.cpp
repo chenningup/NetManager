@@ -199,14 +199,8 @@ void ArpBusiness::addOnitor(const QString& ip)
 
 		//addDeceive(mNetinfo.gateway, arpPack1);
 		addDeceiveGateWay(ip, arpPack1);
+
 		//流量转发
-		//TransmitInfo transmitInfo;
-		//macStrToByte(transmitInfo.devMac, mDeviceInfo[ip]);
-		//macStrToByte(transmitInfo.gatewayMac, mDeviceInfo[mNetinfo.gateway]);
-		//macStrToByte(transmitInfo.mMac, mNetinfo.mac);
-		//ipStrToByte(transmitInfo.devIP, ip);
-		//ipStrToByte(transmitInfo.mIP, mNetinfo.ip);
-		//NetTransmit::Instance().addTransmitDev(transmitInfo);
 		NetTransmit::Instance().startTransmit();
 	}
 }
@@ -228,6 +222,17 @@ void ArpBusiness::globalOnitor()
 		addOnitor(itor.key());
 		itor++;
 	}
+}
+
+void ArpBusiness::stopGlobalOnitor()
+{
+	QHash<QString, QString>::iterator itor = mDeviceInfo.begin();
+	while (itor != mDeviceInfo.end())
+	{
+		deleteOnitor(itor.key());
+		itor++;
+	}
+	NetTransmit::Instance().endTransmit();
 }
 
 void ArpBusiness::broadcast()

@@ -2,6 +2,7 @@
 #include "NetTransmit.h"
 #include"../../NetManager/XuNetInterfaceManager.h"
 #include"../arp/ArpBusiness.h"
+#include <QDebug>
 bool macStrToByte1(QByteArray& marray, const QString& str)
 {
     marray.clear();
@@ -85,6 +86,7 @@ void NetTransmit::run()
         }
         mRecDataMutex.lock();
         mRecDataList.pop_front();
+        qDebug() << "NetTransmit size " << mRecDataList.size();
         mRecDataMutex.unlock();
         
     }
@@ -98,12 +100,15 @@ void NetTransmit::init()
     }
 	XuNetInterfaceManager::Instance()->init();
 	XuNetInterfaceManager::Instance()->attch(this,std::bind(&NetTransmit::receiveData,this,std::placeholders::_1));
-    start();
     isInit = true;
 }
 
 bool NetTransmit::receiveData(std::shared_ptr<QByteArray> data)
 {
+    if (!isRunning())
+    {
+        return false;
+    }
     mRecDataMutex.lock();
     mRecDataList.push_back(data);
     mRecDataMutex.unlock();

@@ -36,6 +36,7 @@ public:
     void addOnitor(const QString &ip);
     void deleteOnitor(const QString &ip);
     void globalOnitor();
+    void stopGlobalOnitor();
 
     void broadcast();
 

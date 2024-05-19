@@ -100,7 +100,7 @@ void Analyse::init()
 	XuNetInterfaceManager::Instance()->attch(this,std::bind(&Analyse::receiveData,this,std::placeholders::_1));
 	start();
 	isInit = true;
-	addAnalyseTask(HttpPicCut,new HttpPicCutTask());
+	//addAnalyseTask(HttpPicCut,new HttpPicCutTask());
 }
 
 void Analyse::run()
@@ -126,6 +126,7 @@ void Analyse::run()
         }
 		mRecMutex.lock();
         mRecDataList.pop_front();
+		qDebug() << "Analyse size " << mRecDataList.size();
 		mRecMutex.unlock();
 	}
 }
