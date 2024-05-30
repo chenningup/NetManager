@@ -1,3 +1,0 @@
-﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(388,5): warning MSB8028: The intermediate directory (D:\vs2013\wincap\WpdPack\Examples-remote\\Debug\x86\) contains files shared from another project (iflist.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-  GetMacAddress.c
-  GetMacAddress.vcxproj -> D:\vs2013\wincap\WpdPack\Examples-remote\\Debug\x86\GetMacAddress.exe
