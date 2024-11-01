@@ -16,25 +16,26 @@ add_definitions(-DHAVE_REMOTE)
 
 include_directories("${PROJECT_SOURCE_DIR}/../3rd/")
 include_directories("${PROJECT_SOURCE_DIR}/../3rd/wincap/")
-include_directories("${PROJECT_SOURCE_DIR}/Protocol/arp")
-include_directories("${PROJECT_SOURCE_DIR}/Protocol/NetTransmit")
-include_directories("${PROJECT_SOURCE_DIR}/NetManager")
-include_directories("${PROJECT_SOURCE_DIR}/Analyse")
+#include_directories("${PROJECT_SOURCE_DIR}/Protocol/arp")
+#include_directories("${PROJECT_SOURCE_DIR}/Protocol/NetTransmit")
+#include_directories("${PROJECT_SOURCE_DIR}/NetManager")
+#include_directories("${PROJECT_SOURCE_DIR}/Analyse")
 link_directories("${PROJECT_SOURCE_DIR}/../Libs/Windows/")
 
 #file(GLOB_RECURSE SRC_DIR_LIST "./*.cpp" "./*.c" "./*.ui" "./*.h")
-aux_source_directory(NetManager NetManager_Src)
-aux_source_directory(Protocol/arp Protocol_Src)
-aux_source_directory(Protocol/NetTransmit Protocol_Src)
-aux_source_directory(Analyse Protocol_Src)
+#aux_source_directory(NetManager NetManager_Src)
+#aux_source_directory(Protocol/arp Protocol_Src)
+#aux_source_directory(Protocol/NetTransmit Protocol_Src)
+#aux_source_directory(Analyse Protocol_Src)
 message(STATUS "SRC_DIR_LIST1 = ${Protocol_Src}")	
-message(STATUS "SRC_DIR_LIST = ${NetManager_Src}")	
+message(STATUS "SRC_DIR_LIST = ${NetManager_Src}")
+file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/*.cpp")
+file(GLOB_RECURSE HEADERS  "${PROJECT_SOURCE_DIR}/*.h")
 set(PROJECT_SOURCES
-    ${Protocol_Src}
-    ${NetManager_Src}
-    main.cpp
-    mainwindow.cpp
-    mainwindow.h
+#   ${Protocol_Src}
+#   ${NetManager_Src}
+    ${SOURCES}
+    ${HEADERS}
     mainwindow.ui
 )
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

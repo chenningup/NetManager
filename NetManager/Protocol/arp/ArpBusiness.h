@@ -4,7 +4,7 @@
 #include <QThread>
 #include <QHash>
 #include <QStringList>
-#include "../NetManager/XuNetInterfaceManager.h"
+#include "../../NetManager/XuNetInterfaceManager.h"
 #include <QMultiHash>
 #include "Arp.h"
 enum ArpTaskType

@@ -2,7 +2,7 @@
 #include "./ui_mainwindow.h"
 #include "./Protocol/arp/ArpBusiness.h"
 #include "./NetManager/XuNetInterfaceManager.h"
-#include "../Analyse/Analyse.h"
+#include "./Analyse/Analyse.h"
 #include<QDebug>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
